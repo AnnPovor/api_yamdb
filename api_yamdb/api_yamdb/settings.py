@@ -1,3 +1,4 @@
+from datetime import timedelta
 import os
 from datetime import timedelta
 
@@ -26,6 +27,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework_simplejwt',
+    # 'django_filters',
+    'reviews'
     'users',
     'api',
 ]
@@ -123,9 +127,22 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
+    
+    # 'DEFAULT_PAGINATION_CLASS': [
+    #     'rest_framework.pagination.LimitOffsetPagination'
+    # ],
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.ScopedRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+        'rest_framework.throttling.AnonRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'user': '10000/day',
+        'anon': '1000/day',
+        'low_request': '1/minute'
+    },
 }
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
     'AUTH_HEADER_TYPES': ('Bearer',),
-}
