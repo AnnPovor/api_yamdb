@@ -48,6 +48,7 @@ class CreateViewSet(
 
 
 class CategoryViewSet(CustomViewSet):
+# class CategoryViewSet(viewsets.ModelViewSet):
 
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
@@ -113,7 +114,8 @@ def get_token(request):
         User,
         username=serializer.validated_data["username"]
     )
-    if user.confirmation_code != serializer.validated_data['confirmation_code']:
+    if (user.confirmation_code != serializer.validated_data['confirmation_code']
+        ):
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
     return Response(
@@ -122,33 +124,67 @@ def get_token(request):
 
 
 class UserViewSet(viewsets.ModelViewSet):
-    permission_classes = (IsAdmin,)
+    # permission_classes = (IsAdmin,)
+    # # queryset = User.objects.all()
+    # serializer_class = UserSerializer
+    # lookup_field = 'username'
+    # # pagination_class = PageNumberPagination
+    # pagination_class = LimitOffsetPagination
+    # filter_backends = (filters.SearchFilter,)
+    # search_fields = ('username',)
+
+    # @action(
+    #     methods=['get', 'patch'],
+    #     detail=False,
+    #     permission_classes=[IsAuthenticated],
+    #     serializer_class=UserSerializerOrReadOnly
+    # )
+    # def get_queryset(self):
+    #     queryset = User.objects.all()
+    #     return queryset
+
+    # def users_profile(self, request):
+    #     user = request.user
+    #     if request.method == "GET":
+    #         serializer = self.get_serializer(user)
+    #         return Response(serializer.data, status=status.HTTP_200_OK)
+    #     if request.method == "PATCH":
+    #         serializer = self.get_serializer(
+    #             user,
+    #             data=request.data,
+    #             partial=True
+    #         )
+    #         serializer.is_valid(raise_exception=True)
+    #         serializer.save()
+    #         return Response(serializer.data, status=status.HTTP_200_OK)
+    #     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    lookup_field = 'username'
-    # pagination_class = PageNumberPagination
+    permission_classes = (IsAuthenticated, IsAdmin,)
     pagination_class = LimitOffsetPagination
-    filter_backends = (filters.SearchFilter,)
-    search_fields = ('username',)
+    lookup_field = 'username'
+    filter_backends = (filters.SearchFilter, )
+    search_fields = ('username', )
 
     @action(
-        methods=['get', 'patch'],
+        methods=['GET', 'PATCH'],
         detail=False,
-        permission_classes=[IsAuthenticated],
-        serializer_class=UserSerializerOrReadOnly
-    )
-    def users_profile(self, request):
-        user = request.user
-        if request.method == "GET":
-            serializer = self.get_serializer(user)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        if request.method == "PATCH":
-            serializer = self.get_serializer(
-                user,
-                data=request.data,
-                partial=True
-            )
+        permission_classes=(IsAuthenticated,),
+        url_path='me')
+    def get_current_user_info(self, request):
+        serializer = UserSerializer(request.user)
+        if request.method == 'PATCH':
+            if request.user.is_admin:
+                serializer = UserSerializer(
+                    request.user,
+                    data=request.data,
+                    partial=True)
+            else:
+                serializer = UserSerializerOrReadOnly(
+                    request.user,
+                    data=request.data,
+                    partial=True)
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        return Response(serializer.data)

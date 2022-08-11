@@ -23,9 +23,11 @@ v1_router.register(
     GenreViewSet,
     basename='genres'
 )
-
-
-v1_router.register('users', UserViewSet, basename='users')
+v1_router.register(
+    'users',
+    UserViewSet,
+    basename='users'
+)
 
 
 urlpatterns = [
