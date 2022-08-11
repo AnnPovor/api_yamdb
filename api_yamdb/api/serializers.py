@@ -78,12 +78,9 @@ class UserSerializerOrReadOnly(serializers.ModelSerializer):
 
 
 class RegisterSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(
-        queryset=User.objects.all()
-    )
-    email = serializers.EmailField(
-        queryset=User.objects.all()
-    )
+    class Meta:
+        model = User
+        fields = ['email', 'username']
 
     def validate_username(self, value):
         if value.lower() == 'me':
