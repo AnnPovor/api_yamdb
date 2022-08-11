@@ -2,6 +2,7 @@ from rest_framework import serializers
 from reviews.models import Category, Genre, Title
 from users.models import User
 
+
 class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -46,6 +47,7 @@ class TitleWriteSerializer(serializers.ModelSerializer):
         fields = '__all__'
         model = Title
 
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -56,6 +58,22 @@ class UserSerializer(serializers.ModelSerializer):
             'bio',
             'first_name',
             'last_name'
+        )
+
+
+class UserSerializerOrReadOnly(serializers.ModelSerializer):
+
+    role = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = User
+        fields = (
+            'first_name',
+            'last_name',
+            'username',
+            'bio',
+            'email',
+            'role'
         )
 
 
@@ -73,6 +91,9 @@ class RegisterSerializer(serializers.ModelSerializer):
                 'Никнейм не может быть "me"'
             )
         return value
+
+    def create(self, validated_data):
+        return User.objects.create_user(**validated_data)
 
     class Meta:
         fields = ('username', 'email')

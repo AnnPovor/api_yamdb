@@ -11,7 +11,7 @@ class User(AbstractUser):
     ROLE_CHOICES = [
         (ADMIN, 'Admin'),
         (MODERATOR, 'Moderator'),
-        (USER, 'User')
+        (USER, 'User'),
     ]
 
     role = models.CharField(verbose_name='Роль',
