@@ -22,7 +22,7 @@ from .permissions import IsAdminUserOrReadOnly
 from .serializers import (
     CategorySerializer,
     GenreSerializer,
-    TitleReadSerializer,
+    TitleReadOnlySerializer,
     TitleWriteSerializer,
     RegisterSerializer,
     ConfirmationSerializer,
@@ -82,11 +82,11 @@ class TitleViewSet(CustomViewSet):
     def get_serializer_class(self):
         if self.request.method in (
             'POST',
-            'PATCH',
+            'PUT',
             'DELETE'
         ):
             return TitleWriteSerializer
-        return TitleReadSerializer
+        return TitleReadOnlySerializer
 
 
 @api_view(["POST"])
