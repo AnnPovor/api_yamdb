@@ -167,13 +167,13 @@ class UserViewSet(viewsets.ModelViewSet):
     search_fields = ('username', )
 
     @action(
-        methods=['GET', 'PATCH'],
+        methods=['GET', 'CREATE', 'PATCH'],
         detail=False,
         permission_classes=(IsAuthenticated,),
         url_path='me')
     def get_current_user_info(self, request):
         serializer = UserSerializer(request.user)
-        if request.method == 'PATCH':
+        if request.method == 'PATCH' or request.method == 'CREATE':
             if request.user.is_admin:
                 serializer = UserSerializer(
                     request.user,
@@ -188,3 +188,16 @@ class UserViewSet(viewsets.ModelViewSet):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.data)
+
+    # def create_user(self, request, *args, **kwargs):
+    #     serializer = UserSerializer(request.user)
+    #     if request.method == 'CREATE':
+    #         if request.user.is_admin:
+    #             serializer = UserSerializer(
+    #                 request.user,
+    #                 data=request.data,
+    #                 partial=True)
+    #         serializer.is_valid(raise_exception=True)
+    #         serializer.save()
+    #         return Response(serializer.data, status=status.HTTP_200_OK)
+    #     return Response(serializer.data)
