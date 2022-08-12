@@ -28,7 +28,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework_simplejwt',
-    # 'django_filters',
+    'django_filters',
     'reviews',
     'users',
     'api',
@@ -121,16 +121,16 @@ ADMIN_EMAIL = 'senkonyta@mail.ru'
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
+        'rest_framework.permissions.AllowAny',
     ],
 
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
     
-    # 'DEFAULT_PAGINATION_CLASS': [
-    #     'rest_framework.pagination.LimitOffsetPagination'
-    # ],
+    'DEFAULT_PAGINATION_CLASS': [
+        'rest_framework.pagination.LimitOffsetPagination'
+    ],
     'DEFAULT_THROTTLE_CLASSES': [
         'rest_framework.throttling.ScopedRateThrottle',
         'rest_framework.throttling.UserRateThrottle',

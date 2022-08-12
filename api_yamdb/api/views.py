@@ -9,24 +9,25 @@ from rest_framework.mixins import (
     ListModelMixin
 )
 from rest_framework.permissions import IsAuthenticated
+from .permissions import IsAdmin
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
-from rest_framework.pagination import PageNumberPagination
-
+from django.contrib.auth.tokens import default_token_generator
 from api_yamdb.settings import ADMIN_EMAIL
 from reviews.models import Category, Genre, Title
 from users.models import User
-from .permissions import IsAdmin
 from .permissions import IsAdminUserOrReadOnly
 from .serializers import (
     CategorySerializer,
     GenreSerializer,
     TitleReadSerializer,
     TitleWriteSerializer,
-    RegisterSerializer,
+    RegistrationSerializer,
     ConfirmationSerializer,
-    UserSerializer,
+    AdminUserSerializer,
     UserSerializerOrReadOnly
+
 )
 
 
@@ -75,18 +76,50 @@ class TitleViewSet(CustomViewSet):
         return TitleWriteSerializer
 
 
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = AdminUserSerializer
+    permission_classes = (IsAdmin,)
+    filter_backends = (filters.SearchFilter,)
+    lookup_field = 'username'
+    lookup_value_regex = '[^/]+'
+    search_fields = ['user__username', ]
+
+    @action(
+        methods=['get', 'patch'],
+        detail=False,
+        permission_classes=[IsAuthenticated],
+    )
+    def me(self, request):
+        serializer = AdminUserSerializer(request.user)
+        if request.method == "PATCH":
+            serializer = UserSerializerOrReadOnly(
+                request.user,
+                data=request.data,
+                partial=True
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 @api_view(["POST"])
 @permission_classes([permissions.AllowAny])
 def register(request):
-    serializer = RegisterSerializer(data=request.data)
+    serializer = RegistrationSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     serializer.save()
-    user = User.objects.get(email=serializer.validated_data['email'])
+    user = get_object_or_404(
+        User,
+        username=serializer.validated_data["username"]
+    )
+    confirmation_code = default_token_generator.make_token(user)
     send_mail(
         subject='Регистрация на сайте YaMDb',
-        message=f'Код подтверждения: {user.confirmation_code}!',
+        message=f'Код подтверждения: {confirmation_code}!',
         from_email=ADMIN_EMAIL,
-        recipient_list=[user.email]
+        recipient_list=[user.email],
     )
     return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -100,41 +133,19 @@ def get_token(request):
         User,
         username=serializer.validated_data["username"]
     )
-    if user.confirmation_code != serializer.validated_data['confirmation_code']:
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+    confirmation_code = serializer.data['confirmation_code']
+    if default_token_generator.check_token(user, confirmation_code):
+        token = RefreshToken.for_user(user)
+        return Response(
+            {'token': str(token.access_token)}, status=status.HTTP_200_OK
+        )
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    return Response(
-        {'token': str(user.token)}, status=status.HTTP_200_OK
-    )
 
-
-class UserViewSet(viewsets.ModelViewSet):
-    permission_classes = (IsAdmin,)
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    lookup_field = 'username'
-    pagination_class = PageNumberPagination
-    filter_backends = (filters.SearchFilter,)
-    search_fields = ('username',)
-
-    @action(
-        methods=['get', 'patch'],
-        detail=False,
-        permission_classes=[IsAuthenticated],
-        serializer_class=UserSerializerOrReadOnly
-    )
-    def users_profile(self, request):
-        user = request.user
-        if request.method == "GET":
-            serializer = self.get_serializer(user)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        if request.method == "PATCH":
-            serializer = self.get_serializer(
-                user,
-                data=request.data,
-                partial=True
-            )
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+def send_confirmation_code(user):
+    confirmation_code = default_token_generator.make_token(user)
+    subject = 'Код подтверждения YaMDb'
+    message = f'{confirmation_code} - ваш код для авторизации на YaMDb'
+    admin_email = ADMIN_EMAIL
+    user_email = [user.email]
+    return send_mail(subject, message, admin_email, user_email)

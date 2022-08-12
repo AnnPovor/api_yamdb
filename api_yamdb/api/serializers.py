@@ -49,6 +49,9 @@ class TitleWriteSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(required=True)
+    email = serializers.EmailField(required=True)
+
     class Meta:
         model = User
         fields = (
@@ -59,6 +62,13 @@ class UserSerializer(serializers.ModelSerializer):
             'first_name',
             'last_name'
         )
+
+        def validate_username(self, value):
+            if value.lower() == 'me':
+                raise serializers.ValidationError(
+                    'Никнейм не может быть "me"'
+                )
+            return value
 
 
 class UserSerializerOrReadOnly(serializers.ModelSerializer):
@@ -77,10 +87,27 @@ class UserSerializerOrReadOnly(serializers.ModelSerializer):
         )
 
 
-class RegisterSerializer(serializers.ModelSerializer):
+class AdminUserSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = User
-        fields = ['email', 'username']
+        fields = (
+            'username', 'email', 'first_name', 'last_name', 'bio', 'role',
+        )
+
+    def validate_username(self, value):
+        if value == 'me':
+            raise serializers.ValidationError(
+                'Имя пользователя "me" не разрешено.'
+            )
+        return value
+
+
+
+class RegistrationSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = ('username', 'email')
+        model = User
 
     def validate_username(self, value):
         if value.lower() == 'me':
@@ -89,23 +116,10 @@ class RegisterSerializer(serializers.ModelSerializer):
             )
         return value
 
-    def create(self, validated_data):
-        return User.objects.create_user(**validated_data)
-
-    class Meta:
-        fields = ('username', 'email')
-        model = User
-        validators = [
-            serializers.UniqueTogetherValidator(
-                queryset=User.objects.all(),
-                fields=['username', 'email']
-            )
-        ]
-
 
 class ConfirmationSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(max_length=30)
-    confirmation_code = serializers.CharField()
+    username = serializers.CharField(required=True)
+    confirmation_code = serializers.CharField(required=True)
 
     class Meta:
         model = User
