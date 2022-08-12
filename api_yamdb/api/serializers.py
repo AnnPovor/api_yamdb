@@ -7,26 +7,21 @@ from users.models import User
 class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
-        # exclude = ('id', )
         fields = ('name', 'slug')
         model = Category
-        # lookup_field = 'slug'
 
 
 class GenreSerializer(serializers.ModelSerializer):
 
     class Meta:
-        # exclude = ('id', )
         fields = ('name', 'slug')
         model = Genre
-        # lookup_field = 'slug'
-        
 
 
 class TitleReadOnlySerializer(serializers.ModelSerializer):
     category = CategorySerializer(
         read_only=True,
-        )
+    )
     genre = GenreSerializer(
         many=True,
         read_only=True,
@@ -67,6 +62,7 @@ class UserSerializer(serializers.ModelSerializer):
             UniqueValidator(queryset=User.objects.all())
         ],
         required=True)
+
     class Meta:
         model = User
         fields = (
@@ -128,4 +124,3 @@ class ConfirmationSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('username', 'confirmation_code')
-
