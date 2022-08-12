@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework.validators import UniqueValidator
 from reviews.models import Category, Genre, Title
 from users.models import User
 
@@ -6,19 +7,20 @@ from users.models import User
 class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
-        exclude = ('id', )
-        # fields = ('id', 'name', 'slug')
+        # exclude = ('id', )
+        fields = ('name', 'slug')
         model = Category
-        lookup_field = 'slug'
+        # lookup_field = 'slug'
 
 
 class GenreSerializer(serializers.ModelSerializer):
 
     class Meta:
         # exclude = ('id', )
-        fields = ('id', 'name', 'slug')
+        fields = ('name', 'slug')
         model = Genre
         # lookup_field = 'slug'
+        
 
 
 class TitleReadOnlySerializer(serializers.ModelSerializer):
@@ -55,15 +57,25 @@ class TitleWriteSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(
+        validators=[
+            UniqueValidator(queryset=User.objects.all())
+        ],
+        required=True)
+    email = serializers.EmailField(
+        validators=[
+            UniqueValidator(queryset=User.objects.all())
+        ],
+        required=True)
     class Meta:
         model = User
         fields = (
-            'role',
-            'username',
-            'email',
-            'bio',
             'first_name',
-            'last_name'
+            'last_name',
+            'username',
+            'bio',
+            'email',
+            'role'
         )
 
 
