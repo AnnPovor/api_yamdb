@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from reviews.models import Category, Genre, Title
 from users.models import User
+from rest_framework.validators import UniqueValidator
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -49,7 +50,11 @@ class TitleWriteSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(required=True)
+    username = serializers.CharField(
+        validators=[
+            UniqueValidator(queryset=User.objects.all())
+        ],
+        required=True)
     email = serializers.EmailField(required=True)
 
     class Meta:
@@ -87,27 +92,10 @@ class UserSerializerOrReadOnly(serializers.ModelSerializer):
         )
 
 
-class AdminUserSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = User
-        fields = (
-            'username', 'email', 'first_name', 'last_name', 'bio', 'role',
-        )
-
-    def validate_username(self, value):
-        if value == 'me':
-            raise serializers.ValidationError(
-                'Имя пользователя "me" не разрешено.'
-            )
-        return value
-
-
-
 class RegistrationSerializer(serializers.ModelSerializer):
     class Meta:
-        fields = ('username', 'email')
         model = User
+        fields = ('email', 'username')
 
     def validate_username(self, value):
         if value.lower() == 'me':

@@ -25,8 +25,8 @@ from .serializers import (
     TitleWriteSerializer,
     RegistrationSerializer,
     ConfirmationSerializer,
-    AdminUserSerializer,
-    UserSerializerOrReadOnly
+    UserSerializerOrReadOnly,
+    UserSerializer
 
 )
 
@@ -78,12 +78,12 @@ class TitleViewSet(CustomViewSet):
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
-    serializer_class = AdminUserSerializer
+    serializer_class = UserSerializer
     permission_classes = (IsAdmin,)
     filter_backends = (filters.SearchFilter,)
     lookup_field = 'username'
     lookup_value_regex = '[^/]+'
-    search_fields = ['user__username', ]
+    search_fields = ["=username", ]
 
     @action(
         methods=['get', 'patch'],
@@ -91,7 +91,7 @@ class UserViewSet(viewsets.ModelViewSet):
         permission_classes=[IsAuthenticated],
     )
     def me(self, request):
-        serializer = AdminUserSerializer(request.user)
+        serializer = UserSerializerOrReadOnly(request.user)
         if request.method == "PATCH":
             serializer = UserSerializerOrReadOnly(
                 request.user,
@@ -105,7 +105,6 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
 @api_view(["POST"])
-@permission_classes([permissions.AllowAny])
 def register(request):
     serializer = RegistrationSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
@@ -140,12 +139,3 @@ def get_token(request):
             {'token': str(token.access_token)}, status=status.HTTP_200_OK
         )
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-def send_confirmation_code(user):
-    confirmation_code = default_token_generator.make_token(user)
-    subject = 'Код подтверждения YaMDb'
-    message = f'{confirmation_code} - ваш код для авторизации на YaMDb'
-    admin_email = ADMIN_EMAIL
-    user_email = [user.email]
-    return send_mail(subject, message, admin_email, user_email)
