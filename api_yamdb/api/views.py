@@ -23,6 +23,7 @@ from .serializers import (CategorySerializer, ConfirmationSerializer,
                           UserSerializer, UserSerializerOrReadOnly)
 
 
+
 class CustomViewSet(
     CreateModelMixin,
     ListModelMixin,
@@ -81,19 +82,55 @@ class TitleViewSet(viewsets.ModelViewSet):
         serializer.save()
         return Response(serializer.data)
 
+    def get_serializer_class(self):
+        if self.action in ('list', 'retrieve'):
+            return TitleReadSerializer
+        return TitleWriteSerializer
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = (IsAdmin,)
+    filter_backends = (filters.SearchFilter,)
+    lookup_field = 'username'
+    lookup_value_regex = '[^/]+'
+    search_fields = ["=username", ]
+
+    @action(
+        methods=['get', 'patch'],
+        detail=False,
+        permission_classes=[IsAuthenticated],
+    )
+    def me(self, request):
+        serializer = UserSerializerOrReadOnly(request.user)
+        if request.method == "PATCH":
+            serializer = UserSerializerOrReadOnly(
+                request.user,
+                data=request.data,
+                partial=True
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 @api_view(["POST"])
-@permission_classes([permissions.AllowAny])
 def register(request):
-    serializer = RegisterSerializer(data=request.data)
+    serializer = RegistrationSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     serializer.save()
-    user = User.objects.get(email=serializer.validated_data['email'])
+    user = get_object_or_404(
+        User,
+        username=serializer.validated_data["username"]
+    )
+    confirmation_code = default_token_generator.make_token(user)
     send_mail(
         subject='Регистрация на сайте YaMDb',
-        message=f'Код подтверждения: {user.confirmation_code}!',
+        message=f'Код подтверждения: {confirmation_code}!',
         from_email=ADMIN_EMAIL,
-        recipient_list=[user.email]
+        recipient_list=[user.email],
     )
     return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -107,58 +144,10 @@ def get_token(request):
         User,
         username=serializer.validated_data["username"]
     )
-    if (
-        user.confirmation_code != serializer.validated_data
-        ['confirmation_code']
-    ):
-        return Response(status=status.HTTP_400_BAD_REQUEST)
-
-    return Response(
-        {'token': str(user.token)}, status=status.HTTP_200_OK
-    )
-
-
-class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = (IsAuthenticated, IsAdmin,)
-    pagination_class = LimitOffsetPagination
-    lookup_field = 'username'
-    filter_backends = (filters.SearchFilter, )
-    search_fields = ('username', )
-
-    @action(
-        methods=['get', 'patch'],
-        detail=True,
-        permission_classes=[IsAuthenticated],
-    )
-    def me(self, request):
-        serializer = UserSerializerOrReadOnly(request.user)
-        if request.method == "PATCH":
-            serializer = UserSerializerOrReadOnly(
-                request.user,
-            )
-        return Response(serializer.data)
-
-    @action(
-        methods=['GET', 'PATCH'],
-        detail=False,
-        permission_classes=(IsAuthenticated,),
-        url_path='me')
-    def get_current_user_info(self, request):
-        serializer = UserSerializer(request.user)
-        if request.method == 'PATCH':
-            if request.user.is_admin:
-                serializer = UserSerializer(
-                    request.user,
-                    data=request.data,
-                    partial=True)
-            else:
-                serializer = UserSerializerOrReadOnly(
-                    request.user,
-                    data=request.data,
-                    partial=True)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.data)
+    confirmation_code = serializer.data['confirmation_code']
+    if default_token_generator.check_token(user, confirmation_code):
+        token = RefreshToken.for_user(user)
+        return Response(
+            {'token': str(token.access_token)}, status=status.HTTP_200_OK
+        )
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
