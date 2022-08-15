@@ -1,6 +1,7 @@
+import uuid
+
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-import uuid
 
 
 class User(AbstractUser):
@@ -14,6 +15,35 @@ class User(AbstractUser):
         (USER, 'User'),
     ]
 
+    first_name = models.CharField(
+        max_length=40,
+        verbose_name='Имя',
+        unique=False,
+        blank=True,
+        null=True
+    )
+
+    last_name = models.CharField(
+        max_length=40,
+        verbose_name='Фамилия',
+        unique=False,
+        blank=True,
+        null=True
+    )
+
+    username = models.CharField(verbose_name='Имя пользователя',
+                                max_length=150,
+                                unique=True,
+                                )
+
+    email = models.EmailField(verbose_name='Адрес электронной почты',
+                              unique=True)
+
+    bio = models.CharField(max_length=100,
+                           verbose_name='О себе',
+                           blank=True,
+                           null=True,)
+
     role = models.CharField(verbose_name='Роль',
                             max_length=50,
                             choices=ROLE_CHOICES,
@@ -21,19 +51,6 @@ class User(AbstractUser):
                             null=True,
                             default=USER
                             )
-
-    username = models.CharField(verbose_name='Имя пользователя',
-                                max_length=150,
-                                unique=True,
-
-                                )
-    email = models.EmailField(verbose_name='Адрес электронной почты',
-                              unique=True)
-
-    bio = models.CharField(max_length=100,
-                           verbose_name='О себе',
-                           blank=True,
-                           null=True)
 
     confirmation_code = models.CharField(max_length=256, default=uuid.uuid4)
 
@@ -55,6 +72,12 @@ class User(AbstractUser):
     class Meta:
         verbose_name = 'Пользователь',
         verbose_name_plural = 'Пользователи'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['username', 'email'],
+                name='unique_username_email'
+            )
+        ]
 
     def __str__(self):
         return self.email

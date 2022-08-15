@@ -6,6 +6,7 @@ STR_LEN = 15
 class Category(models.Model):
     name = models.CharField(
         'Название категории',
+        unique=True,
         max_length=200
     )
     slug = models.SlugField(
@@ -19,13 +20,14 @@ class Category(models.Model):
         verbose_name_plural = 'Категории'
 
     def __str__(self):
-        return f'{self.name[:STR_LEN]}'
+        return f'Category {self.name}, slug {self.slug}'
 
 
 class Genre(models.Model):
     name = models.CharField(
         'Название жанра',
-        max_length=200
+        max_length=200,
+        unique=True,
     )
     slug = models.SlugField(
         'Адрес',
@@ -67,7 +69,9 @@ class Title(models.Model):
     genre = models.ManyToManyField(
         Genre,
         related_name='titles',
-        verbose_name='Жанр'
+        verbose_name='Жанр',
+        null=True,
+        blank=True
     )
 
     class Meta:
