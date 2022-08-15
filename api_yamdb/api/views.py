@@ -1,5 +1,5 @@
+from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
-# from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, permissions, status, viewsets
@@ -10,18 +10,17 @@ from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
-from reviews.models import Category, Genre, Title
-from users.models import User
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from api_yamdb.settings import ADMIN_EMAIL
-
+from reviews.models import Category, Genre, Title
+from users.models import User
 from .filters import TitleFilter
 from .permissions import IsAdmin, IsAdminUserOrReadOnly
 from .serializers import (CategorySerializer, ConfirmationSerializer,
-                          GenreSerializer, RegisterSerializer,
+                          GenreSerializer, RegistrationSerializer,
                           TitleReadOnlySerializer, TitleWriteSerializer,
                           UserSerializer, UserSerializerOrReadOnly)
-
 
 
 class CustomViewSet(
@@ -81,11 +80,6 @@ class TitleViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
-
-    def get_serializer_class(self):
-        if self.action in ('list', 'retrieve'):
-            return TitleReadSerializer
-        return TitleWriteSerializer
 
 
 class UserViewSet(viewsets.ModelViewSet):

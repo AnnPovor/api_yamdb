@@ -5,7 +5,6 @@ from users.models import User
 from rest_framework.validators import UniqueValidator
 
 
-
 class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -100,21 +99,6 @@ class UserSerializerOrReadOnly(serializers.ModelSerializer):
                 )
             return value
 
-
-class UserSerializerOrReadOnly(serializers.ModelSerializer):
-
-    role = serializers.CharField(read_only=True)
-
-    class Meta:
-        model = User
-        fields = (
-            'first_name',
-            'last_name',
-            'username',
-            'bio',
-            'email',
-            'role'
-        )
 
 class RegistrationSerializer(serializers.ModelSerializer):
     class Meta:
