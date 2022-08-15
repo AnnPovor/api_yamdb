@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from reviews.models import Category, Genre, Title
 from users.models import User
+from rest_framework.validators import UniqueValidator
+
 
 class CategorySerializer(serializers.ModelSerializer):
 
@@ -46,7 +48,15 @@ class TitleWriteSerializer(serializers.ModelSerializer):
         fields = '__all__'
         model = Title
 
+
 class UserSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(
+        validators=[
+            UniqueValidator(queryset=User.objects.all())
+        ],
+        required=True)
+    email = serializers.EmailField(required=True)
+
     class Meta:
         model = User
         fields = (
@@ -58,14 +68,34 @@ class UserSerializer(serializers.ModelSerializer):
             'last_name'
         )
 
+        def validate_username(self, value):
+            if value.lower() == 'me':
+                raise serializers.ValidationError(
+                    'Никнейм не может быть "me"'
+                )
+            return value
 
-class RegisterSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(
-        queryset=User.objects.all()
-    )
-    email = serializers.EmailField(
-        queryset=User.objects.all()
-    )
+
+class UserSerializerOrReadOnly(serializers.ModelSerializer):
+
+    role = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = User
+        fields = (
+            'first_name',
+            'last_name',
+            'username',
+            'bio',
+            'email',
+            'role'
+        )
+
+
+class RegistrationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('email', 'username')
 
     def validate_username(self, value):
         if value.lower() == 'me':
@@ -74,20 +104,10 @@ class RegisterSerializer(serializers.ModelSerializer):
             )
         return value
 
-    class Meta:
-        fields = ('username', 'email')
-        model = User
-        validators = [
-            serializers.UniqueTogetherValidator(
-                queryset=User.objects.all(),
-                fields=['username', 'email']
-            )
-        ]
-
 
 class ConfirmationSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(max_length=30)
-    confirmation_code = serializers.CharField()
+    username = serializers.CharField(required=True)
+    confirmation_code = serializers.CharField(required=True)
 
     class Meta:
         model = User

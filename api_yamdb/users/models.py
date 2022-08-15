@@ -11,7 +11,7 @@ class User(AbstractUser):
     ROLE_CHOICES = [
         (ADMIN, 'Admin'),
         (MODERATOR, 'Moderator'),
-        (USER, 'User')
+        (USER, 'User'),
     ]
 
     role = models.CharField(verbose_name='Роль',
@@ -31,7 +31,9 @@ class User(AbstractUser):
                               unique=True)
 
     bio = models.CharField(max_length=100,
-                           verbose_name='О себе')
+                           verbose_name='О себе',
+                           blank=True,
+                           null=True)
 
     confirmation_code = models.CharField(max_length=256, default=uuid.uuid4)
 
@@ -40,7 +42,7 @@ class User(AbstractUser):
 
     @property
     def is_admin(self):
-        return self.role == self.ADMIN
+        return self.is_superuser or self.role == self.ADMIN
 
     @property
     def is_moderator(self):
@@ -55,4 +57,4 @@ class User(AbstractUser):
         verbose_name_plural = 'Пользователи'
 
     def __str__(self):
-        return self.username
+        return self.email

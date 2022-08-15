@@ -22,14 +22,13 @@ INSTALLED_APPS = [
     'rest_framework',
     'django.contrib.admin',
     'django.contrib.auth',
-    'djoser',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework_simplejwt',
-    # 'django_filters',
-    'reviews'
+    'django_filters',
+    'reviews',
     'users',
     'api',
 ]
@@ -121,16 +120,17 @@ ADMIN_EMAIL = 'senkonyta@mail.ru'
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
+        'rest_framework.permissions.AllowAny',
     ],
 
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
     
-    # 'DEFAULT_PAGINATION_CLASS': [
-    #     'rest_framework.pagination.LimitOffsetPagination'
-    # ],
+    'DEFAULT_PAGINATION_CLASS':
+        'rest_framework.pagination.PageNumberPagination',
+        'PAGE_SIZE': 10,
+
     'DEFAULT_THROTTLE_CLASSES': [
         'rest_framework.throttling.ScopedRateThrottle',
         'rest_framework.throttling.UserRateThrottle',
@@ -146,3 +146,4 @@ REST_FRAMEWORK = {
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
     'AUTH_HEADER_TYPES': ('Bearer',),
+}
