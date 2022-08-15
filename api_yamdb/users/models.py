@@ -31,7 +31,9 @@ class User(AbstractUser):
                               unique=True)
 
     bio = models.CharField(max_length=100,
-                           verbose_name='О себе')
+                           verbose_name='О себе',
+                           blank=True,
+                           null=True)
 
     confirmation_code = models.CharField(max_length=256, default=uuid.uuid4)
 
