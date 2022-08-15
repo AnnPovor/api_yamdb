@@ -13,14 +13,15 @@ from rest_framework.viewsets import GenericViewSet
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from api_yamdb.settings import ADMIN_EMAIL
-from reviews.models import Category, Genre, Title
+from reviews.models import Category, Comment, Genre, Review, Title
 from users.models import User
 from .filters import TitleFilter
-from .permissions import IsAdmin, IsAdminUserOrReadOnly
+from .permissions import IsAdmin, IsAdminUserOrReadOnly, IsAuthorOrReadOnlyPermission
 from .serializers import (CategorySerializer, ConfirmationSerializer,
                           GenreSerializer, RegistrationSerializer,
                           TitleReadOnlySerializer, TitleWriteSerializer,
-                          UserSerializer, UserSerializerOrReadOnly)
+                          UserSerializer, UserSerializerOrReadOnly,
+                          CommentSerializer, ReviewSerializer)
 
 
 class CustomViewSet(
@@ -30,6 +31,26 @@ class CustomViewSet(
     GenericViewSet
 ):
     pass
+
+
+class CommentViewSet(CustomViewSet):
+
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+    pagination_class = LimitOffsetPagination
+    permission_classes = (IsAuthorOrReadOnlyPermission,IsAdmin,)
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('review', )
+
+
+class ReviewViewSet(CustomViewSet):
+
+    queryset = Review.objects.all()
+    serializer_class = ReviewSerializer
+    pagination_class = LimitOffsetPagination
+    permission_classes = (IsAuthorOrReadOnlyPermission, IsAdmin,)
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('title', )
 
 
 class CategoryViewSet(CustomViewSet):

@@ -1,4 +1,6 @@
 from django.db import models
+from users.models import User
+from django.core.validators import MaxValueValidator, MinValueValidator
 
 STR_LEN = 15
 
@@ -80,3 +82,68 @@ class Title(models.Model):
 
     def __str__(self):
         return f'{self.name[:STR_LEN]}'
+
+
+class Review(models.Model):
+    title = models.ForeignKey(
+        Title,
+        on_delete=models.CASCADE,
+        related_name='reviews'
+    )
+    text = models.TextField()
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='reviews'
+    )
+    pub_date = models.DateTimeField(
+        'Дата публикации',
+        auto_now_add=True,
+        db_index=True
+    )
+    score = models.IntegerField(
+        'Оценка',
+        default = 5,
+        validators=[
+            MaxValueValidator(10),
+            MinValueValidator(1)
+        ]
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['author', 'title'],
+                name='unique review')
+        ]
+        verbose_name = 'Отзыв'
+        verbose_name_plural = 'Отзывы'
+
+    def __str__(self):
+        return f'{self.text[:STR_LEN]}'
+
+
+class Comment(models.Model):
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='comments'
+    )
+    review = models.ForeignKey(
+        Review,
+        on_delete=models.CASCADE,
+        related_name='comments'
+    )
+    text = models.TextField()
+    pub_date = models.DateTimeField(
+        'Дата добавления',
+        auto_now_add=True,
+        db_index=True
+    )
+
+    class Meta:
+        verbose_name = 'Коммент'
+        verbose_name_plural = 'Комменты'
+
+    def __str__(self):
+        return f'{self.text[:STR_LEN]}'
