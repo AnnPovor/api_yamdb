@@ -1,3 +1,4 @@
+from django.conf import settings
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from reviews.models import Category, Comment, Genre, Review, Title
@@ -29,9 +30,9 @@ class ReviewSerializer(serializers.ModelSerializer):
         return data
 
     def validate_score(self, value):
-        if not 1 <= value <= 10:
+        if not settings.MIN_RATE <= value <= settings.MAX_RATE:
             raise serializers.ValidationError(
-                'Оценкой должна быть диапазоне от 1 до 10.'
+                'Оценка должна быть диапазоне от 1 до 10.'
             )
         return value
 
@@ -46,17 +47,6 @@ class CommentSerializer(serializers.ModelSerializer):
         fields = ('id', 'text', 'author', 'pub_date')
         model = Comment
 
-
-# class ReviewWriteSerializer(serializers.ModelSerializer):
-#     title = serializers.SlugRelatedField(
-#         queryset=Title.objects.all(),
-#         slug_field='slug',
-#         required=True,
-#     )
-
-#     class Meta:
-#         fields = ('text', 'score')
-#         model = Review
 
 class CategorySerializer(serializers.ModelSerializer):
 
