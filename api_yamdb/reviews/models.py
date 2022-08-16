@@ -1,6 +1,6 @@
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from users.models import User
-from django.core.validators import MaxValueValidator, MinValueValidator
 
 STR_LEN = 15
 
@@ -103,7 +103,7 @@ class Review(models.Model):
     )
     score = models.IntegerField(
         'Оценка',
-        default = 5,
+        default=5,
         validators=[
             MaxValueValidator(10),
             MinValueValidator(1)
