@@ -3,7 +3,6 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from reviews.models import Category, Comment, Genre, Review, Title
 from users.models import User
-from rest_framework.validators import UniqueValidator
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -101,7 +100,7 @@ class UserSerializer(serializers.ModelSerializer):
             UniqueValidator(queryset=User.objects.all())
         ],
         required=True)
-        
+
     email = serializers.EmailField(
         validators=[
             UniqueValidator(queryset=User.objects.all())
