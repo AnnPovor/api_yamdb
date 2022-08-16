@@ -1,4 +1,4 @@
-# api_yamdb
+# Yamdb API
 
 Что-то новое
 
