@@ -101,12 +101,18 @@ class Review(models.Model):
         auto_now_add=True,
         db_index=True
     )
-    score = models.IntegerField(
+    score = models.PositiveSmallIntegerField(
         'Оценка',
-        default = 5,
+        default=5,
         validators=[
-            MaxValueValidator(10),
-            MinValueValidator(1)
+            MaxValueValidator(
+                10,
+                message='Оценка не должна быть выше 10'
+            ),
+            MinValueValidator(
+                1,
+                message='Оценка не должна быть меньше 1'
+            )
         ]
     )
 
