@@ -1,5 +1,8 @@
+import uuid
+
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
+from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, permissions, status, viewsets
@@ -16,16 +19,13 @@ from api_yamdb.settings import ADMIN_EMAIL
 from reviews.models import Category, Genre, Review, Title
 from users.models import User
 from .filters import TitleFilter
-from .permissions import (
-    IsAdmin,
-    IsAdminUserOrReadOnly,
-    ReviewCommentPermission
-)
-from .serializers import (CategorySerializer, ConfirmationSerializer,
-                          GenreSerializer, RegistrationSerializer,
+from .permissions import (IsAdmin, IsAdminUserOrReadOnly,
+                          ReviewCommentPermission)
+from .serializers import (CategorySerializer, CommentSerializer,
+                          ConfirmationSerializer, GenreSerializer,
+                          RegistrationSerializer, ReviewSerializer,
                           TitleReadOnlySerializer, TitleWriteSerializer,
-                          UserSerializer, UserSerializerOrReadOnly,
-                          CommentSerializer, ReviewSerializer)
+                          UserSerializer, UserSerializerOrReadOnly)
 
 
 class CustomViewSet(
@@ -99,30 +99,17 @@ class GenreViewSet(CustomViewSet):
 
 class TitleViewSet(viewsets.ModelViewSet):
 
-    queryset = Title.objects.all()
+    queryset = Title.objects.annotate(rating=Avg('reviews__score')).all()
     pagination_class = LimitOffsetPagination
     permission_classes = (IsAdminUserOrReadOnly,)
     serializer_class = TitleReadOnlySerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter
 
-    @action(
-        methods=[
-            'POST',
-            'PATCH',
-            'DELETE'],
-        detail=True,
-        permission_classes=[IsAdmin],
-    )
-    def post_admin(self, request):
-        if request.user.is_admin:
-            serializer = TitleWriteSerializer(
-                request.user,
-                data=request.data,
-                partial=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
+    def get_serializer_class(self):
+        if self.action in ('list', 'retrieve'):
+            return TitleReadOnlySerializer
+        return TitleWriteSerializer
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -131,8 +118,7 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAdmin,)
     filter_backends = (filters.SearchFilter,)
     lookup_field = 'username'
-    lookup_value_regex = '[^/]+'
-    search_fields = ["=username", ]
+    search_fields = ('username', )
 
     @action(
         methods=['get', 'patch'],
@@ -141,7 +127,7 @@ class UserViewSet(viewsets.ModelViewSet):
     )
     def me(self, request):
         serializer = UserSerializerOrReadOnly(request.user)
-        if request.method == "PATCH":
+        if request.method == 'PATCH':
             serializer = UserSerializerOrReadOnly(
                 request.user,
                 data=request.data,
@@ -153,16 +139,16 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-@api_view(["POST"])
+@api_view(['POST'])
 def register(request):
     serializer = RegistrationSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     serializer.save()
     user = get_object_or_404(
         User,
-        username=serializer.validated_data["username"]
+        username=serializer.validated_data['username']
     )
-    confirmation_code = default_token_generator.make_token(user)
+    confirmation_code = uuid.uuid4()
     send_mail(
         subject='Регистрация на сайте YaMDb',
         message=f'Код подтверждения: {confirmation_code}!',
@@ -172,14 +158,14 @@ def register(request):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-@api_view(["POST"])
+@api_view(['POST'])
 @permission_classes([permissions.AllowAny])
 def get_token(request):
     serializer = ConfirmationSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     user = get_object_or_404(
         User,
-        username=serializer.validated_data["username"]
+        username=serializer.validated_data['username']
     )
     confirmation_code = serializer.data['confirmation_code']
     if default_token_generator.check_token(user, confirmation_code):

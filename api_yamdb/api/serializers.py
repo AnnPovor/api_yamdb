@@ -3,7 +3,6 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from reviews.models import Category, Comment, Genre, Review, Title
 from users.models import User
-from rest_framework.validators import UniqueValidator
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -101,7 +100,7 @@ class UserSerializer(serializers.ModelSerializer):
             UniqueValidator(queryset=User.objects.all())
         ],
         required=True)
-        
+
     email = serializers.EmailField(
         validators=[
             UniqueValidator(queryset=User.objects.all())
@@ -135,13 +134,6 @@ class UserSerializerOrReadOnly(serializers.ModelSerializer):
             'role'
         )
 
-        def validate_username(self, value):
-            if value.lower() == 'me':
-                raise serializers.ValidationError(
-                    'Никнейм не может быть "me"'
-                )
-            return value
-
 
 class RegistrationSerializer(serializers.ModelSerializer):
     class Meta:
@@ -154,9 +146,6 @@ class RegistrationSerializer(serializers.ModelSerializer):
                 'Никнейм не может быть "me"'
             )
         return value
-
-    def create(self, validated_data):
-        return User.objects.create_user(**validated_data)
 
     class Meta:
         fields = ('username', 'email')
