@@ -1,3 +1,5 @@
+import uuid
+
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.db.models import Avg
@@ -12,11 +14,10 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 from rest_framework_simplejwt.tokens import RefreshToken
-from reviews.models import Category, Genre, Review, Title
-from users.models import User
 
 from api_yamdb.settings import ADMIN_EMAIL
-
+from reviews.models import Category, Genre, Review, Title
+from users.models import User
 from .filters import TitleFilter
 from .permissions import (IsAdmin, IsAdminUserOrReadOnly,
                           ReviewCommentPermission)
@@ -117,8 +118,7 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAdmin,)
     filter_backends = (filters.SearchFilter,)
     lookup_field = 'username'
-    lookup_value_regex = '[^/]+'
-    search_fields = ["=username", ]
+    search_fields = ('username', )
 
     @action(
         methods=['get', 'patch'],
@@ -127,7 +127,7 @@ class UserViewSet(viewsets.ModelViewSet):
     )
     def me(self, request):
         serializer = UserSerializerOrReadOnly(request.user)
-        if request.method == "PATCH":
+        if request.method == 'PATCH':
             serializer = UserSerializerOrReadOnly(
                 request.user,
                 data=request.data,
@@ -139,16 +139,16 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-@api_view(["POST"])
+@api_view(['POST'])
 def register(request):
     serializer = RegistrationSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     serializer.save()
     user = get_object_or_404(
         User,
-        username=serializer.validated_data["username"]
+        username=serializer.validated_data['username']
     )
-    confirmation_code = default_token_generator.make_token(user)
+    confirmation_code = uuid.uuid4()
     send_mail(
         subject='Регистрация на сайте YaMDb',
         message=f'Код подтверждения: {confirmation_code}!',
@@ -158,14 +158,14 @@ def register(request):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-@api_view(["POST"])
+@api_view(['POST'])
 @permission_classes([permissions.AllowAny])
 def get_token(request):
     serializer = ConfirmationSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     user = get_object_or_404(
         User,
-        username=serializer.validated_data["username"]
+        username=serializer.validated_data['username']
     )
     confirmation_code = serializer.data['confirmation_code']
     if default_token_generator.check_token(user, confirmation_code):
