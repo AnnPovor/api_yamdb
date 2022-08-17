@@ -134,13 +134,6 @@ class UserSerializerOrReadOnly(serializers.ModelSerializer):
             'role'
         )
 
-        def validate_username(self, value):
-            if value.lower() == 'me':
-                raise serializers.ValidationError(
-                    'Никнейм не может быть "me"'
-                )
-            return value
-
 
 class RegistrationSerializer(serializers.ModelSerializer):
     class Meta:
@@ -153,9 +146,6 @@ class RegistrationSerializer(serializers.ModelSerializer):
                 'Никнейм не может быть "me"'
             )
         return value
-
-    def create(self, validated_data):
-        return User.objects.create_user(**validated_data)
 
     class Meta:
         fields = ('username', 'email')
