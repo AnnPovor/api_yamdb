@@ -130,6 +130,7 @@ class Review(models.Model):
                 message='Оценка не должна быть меньше 1'
             )
         ]
+    )
 
     class Meta:
         constraints = [
