@@ -118,6 +118,7 @@ class Review(models.Model):
         verbose_name='Дата публикации',
     )
     score = models.PositiveSmallIntegerField(
+        verbose_name='Оценка',
         default=5,
         validators=[
             MaxValueValidator(
@@ -128,8 +129,7 @@ class Review(models.Model):
                 1,
                 message='Оценка не должна быть меньше 1'
             )
-        ],
-        verbose_name='Оценка'
+        ]
     )
 
     class Meta:
