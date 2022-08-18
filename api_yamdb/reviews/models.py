@@ -1,7 +1,8 @@
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from django.utils import timezone
 from users.models import User
+
+from .validators import validate_year
 
 STR_LEN = 15
 
@@ -56,12 +57,7 @@ class Title(models.Model):
         help_text='Не более 200 символов'
     )
     year = models.PositiveSmallIntegerField(
-        validators=[
-            MaxValueValidator(
-                timezone.now().year,
-                message='Год не может быть больше текущего'
-            ),
-        ],
+        validators=(validate_year,),
         verbose_name='Год выпуска произведения',
     )
     category = models.ForeignKey(
