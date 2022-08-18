@@ -40,7 +40,6 @@ class User(AbstractUser):
                                         regex='\w+',
                                         message='Введен неверный формат')]
                                 )
-    # ^[\w.@+-]+\z$
 
     email = models.EmailField(verbose_name='Адрес электронной почты',
                               unique=True)
