@@ -57,7 +57,7 @@ class Title(models.Model):
         help_text='Не более 200 символов'
     )
     year = models.PositiveSmallIntegerField(
-        validators=(validate_year,),
+        validators=[validate_year, ],
         verbose_name='Год выпуска произведения',
     )
     category = models.ForeignKey(
