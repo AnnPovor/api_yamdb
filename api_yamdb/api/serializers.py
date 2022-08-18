@@ -22,7 +22,7 @@ class ReviewSerializer(serializers.ModelSerializer):
         title_id = self.context['view'].kwargs.get('title_id')
         author = self.context['request'].user
         if Review.objects.filter(
-                author=author, title=title_id).exists():
+                author=author, title__id=title_id).exists():
             raise serializers.ValidationError(
                 'Вы можете написать только один отзыв к произведению.'
             )
