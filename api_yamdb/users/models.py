@@ -37,7 +37,7 @@ class User(AbstractUser):
                                 unique=True,
                                 validators=[
                                     RegexValidator(
-                                        regex='\w+',
+                                        regex='^\w',
                                         message='Введен неверный формат')]
                                 )
 
