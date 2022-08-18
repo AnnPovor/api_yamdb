@@ -37,9 +37,10 @@ class User(AbstractUser):
                                 unique=True,
                                 validators=[
                                     RegexValidator(
-                                        regex='[^/]+',
+                                        regex='\w+',
                                         message='Введен неверный формат')]
                                 )
+    # ^[\w.@+-]+\z$
 
     email = models.EmailField(verbose_name='Адрес электронной почты',
                               unique=True)
@@ -62,18 +63,6 @@ class User(AbstractUser):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
 
-    @property
-    def is_admin(self):
-        return self.is_superuser or self.role == self.ADMIN
-
-    @property
-    def is_moderator(self):
-        return self.role == self.MODERATOR
-
-    @property
-    def is_user(self):
-        return self.role == self.USER
-
     class Meta:
         verbose_name = 'Пользователь',
         verbose_name_plural = 'Пользователи'
@@ -86,3 +75,15 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.email
+
+    @property
+    def is_admin(self):
+        return self.is_superuser or self.role == self.ADMIN
+
+    @property
+    def is_moderator(self):
+        return self.role == self.MODERATOR
+
+    @property
+    def is_user(self):
+        return self.role == self.USER
