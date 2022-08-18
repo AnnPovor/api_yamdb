@@ -14,10 +14,11 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 from rest_framework_simplejwt.tokens import RefreshToken
-
-from api_yamdb.settings import ADMIN_EMAIL
 from reviews.models import Category, Genre, Review, Title
 from users.models import User
+
+from api_yamdb.settings import ADMIN_EMAIL
+
 from .filters import TitleFilter
 from .permissions import (IsAdmin, IsAdminUserOrReadOnly,
                           ReviewCommentPermission)
